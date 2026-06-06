@@ -17,6 +17,7 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat-square&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
 [![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io)
+[![Joi](https://img.shields.io/badge/Validation-Joi-0080FF?style=flat-square)](https://joi.dev)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-In%20Development-orange?style=flat-square)]()
 
@@ -38,6 +39,7 @@
 - [User Stories](#-user-stories)
 - [Project Structure](#-project-structure)
 - [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
 - [Roadmap](#-roadmap)
 
 ---
@@ -92,15 +94,16 @@ Before Tadbeer, TechNile faced three core operational failures:
 
 ## 👤 User Roles
 
-Tadbeer uses **Role-Based Access Control (RBAC)** — every user sees exactly what their role allows.
+Tadbeer is built around **4 core roles**. The highest authority is **Admin** — no super-admin exists because the system is designed for a single company (TechNile).
 
 | Avatar | Name | Role | Access Level |
 |--------|------|------|-------------|
-| 👑 | **Ahmed** | Super Admin | Full system — users, settings, logs, everything |
-| 📊 | **Sarah** | Admin / General Manager | Company-wide CRM + HRM overview, reports, payroll approval |
-| 🧑‍💼 | **Karim** | HR Manager | HRM only — employees, attendance, leave, payroll generation |
+| 📊 | **Sarah** | Admin / General Manager | Highest authority — full CRM + HRM overview, reports, payroll approval, user management |
+| 🧑‍💼 | **Karim** | HR Manager | HRM only — employees, attendance, leave requests, payroll generation |
 | 🎯 | **Layla** | Sales Agent | Her own leads, tasks, and activities only |
-| 👤 | **Mahmoud** | Employee | Personal portal — check-in, leave requests, payslip |
+| 👤 | **Mahmoud** | Employee | Personal portal — check-in, leave requests, own payslip |
+
+> **Why no Super Admin?** Tadbeer serves a single organization. The Admin role (Sarah) holds full system control. A super-admin layer would add unnecessary complexity without business value.
 
 ---
 
@@ -111,8 +114,8 @@ Tadbeer uses **Role-Based Access Control (RBAC)** — every user sees exactly wh
 | # | Screen | Role(s) | Key Features |
 |---|--------|---------|--------------|
 | 1 | **Login Page** | All | Email/password auth, role-based redirect |
-| 2 | **Admin Dashboard** | Admin, Super Admin | KPIs, bar chart, recent activity feed |
-| 3 | **CRM Client Hub** | Admin, Sales Manager, Agent | Lead stats, contacts table, lead detail panel |
+| 2 | **Admin Dashboard** | Admin | KPIs, revenue chart, recent activity feed |
+| 3 | **CRM Client Hub** | Admin, Sales Agent | Lead stats, contacts table, lead detail panel |
 | 4 | **HRM Employee Portal** | Admin, HR Manager | Attendance overview, team calendar, employee directory |
 | 5 | **Project Tracking** | Admin, Sales, Support | Budget, Kanban board (Backlog / In Progress / Review / Done) |
 | 6 | **Leads List** | Admin, Sales Agent | Filterable lead table with status badges |
@@ -147,8 +150,8 @@ Tadbeer uses **Role-Based Access Control (RBAC)** — every user sees exactly wh
                      │  REST API (HTTP/HTTPS + JSON)
 ┌────────────────────▼────────────────────────────┐
 │         Backend: Node.js + Express 4             │
-│    JWT Auth · RBAC Middleware · Mongoose ODM     │
-│    Multer (uploads) · Nodemailer · PDFKit        │
+│   JWT Auth · RBAC Middleware · Joi Validation    │
+│   Mongoose ODM · Multer · PDFKit                 │
 └────────────────────┬────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────┐
@@ -166,48 +169,55 @@ Tadbeer uses **Role-Based Access Control (RBAC)** — every user sees exactly wh
 | Frontend | React.js | 18.x | UI components & SPA routing |
 | Styling | Bootstrap | 5.x | Responsive UI components |
 | Auth | JSON Web Tokens (JWT) | — | Stateless session management |
-| PDF | PDFKit / pdf-lib | — | Monthly payslip generation |
+| Validation | Joi | — | Request body validation |
+| PDF | PDFKit | — | Monthly payslip generation |
 | File Upload | Multer | — | Employee docs & attachments |
-| Notifications | Socket.io (optional) | — | Real-time in-app alerts |
 
 ---
 
 ## 🗄️ Database Schema (MongoDB Collections)
 
-MongoDB uses **documents** instead of tables. Here are the 6 core collections:
-
 ```
-employees ──────────────────────────────────────────┐
-    │ role (embedded)                                │
-    │ department (embedded)                          │
-    │                                                │
-    ├──── leads (agent_id ref)                       │
-    │         └──── activities (lead_id ref)         │
-    │         └──── tasks (lead_id ref)              │
-    │                                                │
-    ├──── attendance (employee_id ref)               │
-    ├──── leaveRequests (employee_id ref)            │
-    ├──── payroll (employee_id ref)                  │
-    └──── notifications (user_id ref)               ◄┘
+employees ───────────────────────────────────────────┐
+    │  role: ['admin','sales_agent','hr_manager',     │
+    │          'employee']                            │
+    │  department: ['management','sales','hr',        │
+    │               'support']                        │
+    │                                                 │
+    ├──── leads        (agentId ref → Employee)       │
+    │       └── activities  (leadId ref → Lead)       │
+    │       └── tasks        (leadId ref → Lead)      │
+    │                                                 │
+    ├──── attendance    (employeeId ref → Employee)   │
+    ├──── leaveRequests (employeeId ref → Employee)   │
+    ├──── payroll       (employeeId ref → Employee)   │
+    └──── notifications (userId    ref → Employee)  ◄─┘
 ```
 
-### Collections & Mongoose Schemas
+### Mongoose Schemas
 
 <details>
 <summary><b>Employee Schema</b> (click to expand)</summary>
 
 ```js
 const employeeSchema = new mongoose.Schema({
-  name:          { type: String, required: true },
-  email:         { type: String, required: true, unique: true },
-  password:      { type: String, required: true },   // bcrypt hashed
-  phone:         { type: String },
-  role:          { type: String, enum: ['admin', 'sales_agent', 'hr_manager', 'employee'], required: true },
-  department:    { type: String, enum: ['management', 'sales', 'hr', 'support'] },
-  basicSalary:   { type: Number, default: 0 },
-  leaveBalance:  { type: Number, default: 21 },
-  hireDate:      { type: Date },
-  isActive:      { type: Boolean, default: true },
+  name:         { type: String, required: true },
+  email:        { type: String, required: true, unique: true },
+  password:     { type: String, required: true },  // bcrypt hashed
+  phone:        { type: String },
+  role: {
+    type: String,
+    enum: ['admin', 'sales_agent', 'hr_manager', 'employee'],
+    required: true
+  },
+  department: {
+    type: String,
+    enum: ['management', 'sales', 'hr', 'support']
+  },
+  basicSalary:  { type: Number, default: 0 },
+  leaveBalance: { type: Number, default: 21 },
+  hireDate:     { type: Date },
+  isActive:     { type: Boolean, default: true },
 }, { timestamps: true });
 ```
 
@@ -218,19 +228,19 @@ const employeeSchema = new mongoose.Schema({
 
 ```js
 const leadSchema = new mongoose.Schema({
-  restaurantName:  { type: String, required: true },
-  contactPerson:   { type: String },
-  phone:           { type: String },
-  email:           { type: String },
-  expectedValue:   { type: Number, default: 0 },
+  restaurantName: { type: String, required: true },
+  contactPerson:  { type: String },
+  phone:          { type: String },
+  email:          { type: String },
+  expectedValue:  { type: Number, default: 0 },
   status: {
     type: String,
     enum: ['New', 'Assigned', 'Contacted', 'Negotiation', 'Won', 'Lost'],
     default: 'New'
   },
-  agentId:         { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
-  createdBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
-  notes:           { type: String },
+  agentId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
+  createdBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
+  notes:      { type: String },
 }, { timestamps: true });
 ```
 
@@ -241,12 +251,12 @@ const leadSchema = new mongoose.Schema({
 
 ```js
 const attendanceSchema = new mongoose.Schema({
-  employeeId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
-  date:          { type: Date, required: true },
-  checkIn:       { type: String },    // "09:05"
-  checkOut:      { type: String },    // "17:30"
-  status:        { type: String, enum: ['Present', 'Late', 'Absent'], default: 'Present' },
-  workingHours:  { type: Number },
+  employeeId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
+  date:         { type: Date, required: true },
+  checkIn:      { type: String },       // "09:05"
+  checkOut:     { type: String },       // "17:30"
+  status:       { type: String, enum: ['Present', 'Late', 'Absent'], default: 'Present' },
+  workingHours: { type: Number },
 }, { timestamps: true });
 ```
 
@@ -257,14 +267,14 @@ const attendanceSchema = new mongoose.Schema({
 
 ```js
 const payrollSchema = new mongoose.Schema({
-  employeeId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
-  month:        { type: String, required: true },  // "2025-01"
-  basicSalary:  { type: Number },
-  bonuses:      { type: Number, default: 0 },
-  deductions:   { type: Number, default: 0 },
-  netSalary:    { type: Number },   // basicSalary + bonuses - deductions
-  status:       { type: String, enum: ['Pending', 'Paid'], default: 'Pending' },
-  payslipUrl:   { type: String },   // PDF download path
+  employeeId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
+  month:       { type: String, required: true },   // "2025-01"
+  basicSalary: { type: Number },
+  bonuses:     { type: Number, default: 0 },
+  deductions:  { type: Number, default: 0 },
+  netSalary:   { type: Number },    // basicSalary + bonuses - deductions
+  status:      { type: String, enum: ['Pending', 'Paid'], default: 'Pending' },
+  payslipUrl:  { type: String },    // PDF download path
 }, { timestamps: true });
 ```
 
@@ -274,73 +284,84 @@ const payrollSchema = new mongoose.Schema({
 
 ## 🔌 API Reference
 
-Base URL: `http://localhost:5000/api`
+**Base URL:** `http://localhost:5000/api`
+
+> All protected routes require the header:
+> `Authorization: Bearer <token>`
+>
+> Every endpoint uses two middleware layers:
+> - `protect` — verifies JWT and attaches `req.user`
+> - `authorize('admin', 'hr_manager')` — checks role permission
 
 ### Authentication
 ```
-POST   /api/auth/login          → Login (email + password) → returns JWT
-POST   /api/auth/logout         → Logout (blacklist token)
-GET    /api/auth/me             → Get current user profile
+POST   /api/auth/login       → Login → returns JWT token
+POST   /api/auth/logout      → Logout (blacklist token)
+GET    /api/auth/me          → Get current user profile
 ```
 
 ### CRM — Leads
 ```
-GET    /api/leads               → List leads (filtered by role automatically)
-POST   /api/leads               → Create new lead
-GET    /api/leads/:id           → Get lead details + activities + tasks
-PUT    /api/leads/:id           → Update lead data
-DELETE /api/leads/:id           → Delete lead (Admin only)
-PATCH  /api/leads/:id/assign    → Assign to agent (Admin only)
-PATCH  /api/leads/:id/status    → Update pipeline status
+GET    /api/leads                  → List leads (auto-filtered by role)
+POST   /api/leads                  → Create new lead
+GET    /api/leads/:id              → Lead details + activities + tasks
+PUT    /api/leads/:id              → Update lead
+DELETE /api/leads/:id              → Delete lead           [admin]
+PATCH  /api/leads/:id/assign       → Assign to agent       [admin]
+PATCH  /api/leads/:id/status       → Update pipeline status
 ```
 
 ### CRM — Activities & Tasks
 ```
-POST   /api/leads/:id/activities    → Log activity (call / meeting / email / note)
-GET    /api/leads/:id/activities    → Get activity timeline for a lead
-POST   /api/leads/:id/tasks         → Create task linked to lead
-GET    /api/tasks                   → List all tasks (filtered by role)
-PATCH  /api/tasks/:id/status        → Mark task done / pending
+POST   /api/leads/:id/activities   → Log activity (call/meeting/email/note)
+GET    /api/leads/:id/activities   → Get activity timeline
+POST   /api/leads/:id/tasks        → Add task to lead
+GET    /api/tasks                  → List tasks (filtered by role)
+PATCH  /api/tasks/:id/status       → Mark task done / pending
 ```
 
 ### HRM — Employees
 ```
-GET    /api/employees           → List all employees
-POST   /api/employees           → Create employee profile
-GET    /api/employees/:id       → Get employee details
-PUT    /api/employees/:id       → Update employee data
-DELETE /api/employees/:id       → Deactivate employee
+GET    /api/employees              → List all employees    [admin, hr_manager]
+POST   /api/employees              → Create employee       [admin, hr_manager]
+GET    /api/employees/:id          → Get employee details  [admin, hr_manager]
+PUT    /api/employees/:id          → Update employee       [admin, hr_manager]
+DELETE /api/employees/:id          → Deactivate employee   [admin]
 ```
 
 ### HRM — Attendance
 ```
-POST   /api/attendance/checkin      → Record check-in (Employee)
-POST   /api/attendance/checkout     → Record check-out (Employee)
-GET    /api/attendance              → View records (Admin/HR: all | Employee: own)
-GET    /api/attendance/:employeeId  → Records for specific employee
+POST   /api/attendance/checkin         → Record check-in      [employee]
+POST   /api/attendance/checkout        → Record check-out     [employee]
+GET    /api/attendance                 → All records          [admin, hr_manager]
+GET    /api/attendance/my              → Own records          [employee]
+GET    /api/attendance/:employeeId     → Specific employee    [admin, hr_manager]
 ```
 
 ### HRM — Leave Requests
 ```
-GET    /api/leaves              → List requests (filtered by role)
-POST   /api/leaves              → Submit leave request
-PATCH  /api/leaves/:id/approve  → Approve (Admin / HR Manager)
-PATCH  /api/leaves/:id/reject   → Reject with comment (Admin / HR Manager)
+GET    /api/leaves                     → All requests         [admin, hr_manager]
+GET    /api/leaves/my                  → Own requests         [all roles]
+POST   /api/leaves                     → Submit leave request [all roles]
+PATCH  /api/leaves/:id/approve         → Approve              [admin, hr_manager]
+PATCH  /api/leaves/:id/reject          → Reject with comment  [admin, hr_manager]
 ```
 
 ### HRM — Payroll
 ```
-POST   /api/payroll/generate    → Generate monthly payroll (Admin / HR)
-GET    /api/payroll             → View payroll list (Admin / HR)
-GET    /api/payroll/my          → Own payslip (Employee)
-GET    /api/payroll/:id/pdf     → Download payslip PDF
+POST   /api/payroll/generate           → Generate monthly payroll  [admin, hr_manager]
+GET    /api/payroll                    → View payroll list          [admin, hr_manager]
+GET    /api/payroll/my                 → Own payslip               [all roles]
+GET    /api/payroll/:id/pdf            → Download payslip PDF      [admin, hr_manager, self]
 ```
 
 ### Notifications
 ```
-GET    /api/notifications       → Get current user notifications
-PATCH  /api/notifications/read  → Mark all as read
+GET    /api/notifications              → Current user notifications
+PATCH  /api/notifications/read         → Mark all as read
 ```
+
+> **Validation:** All request bodies are validated using **Joi**. Invalid requests return `400` with a descriptive error message. Auth errors return `401`. Permission errors return `403`.
 
 ---
 
@@ -369,7 +390,7 @@ PATCH  /api/notifications/read  → Mark all as read
 <details>
 <summary><b>🎯 Scenario 1 — Layla adds a lead and closes the deal</b></summary>
 
-Layla logs in to her Sales Agent portal. She adds **Pizza House** as a new lead, fills in the contact details and expected value. She schedules a call task for **Thursday 2PM**. After the call, she logs it as an Activity with outcome notes. The lead moves through `Contacted → Negotiation` and finally she marks it as **Won**. Sarah receives an instant notification and sees the revenue chart update on her dashboard.
+Layla logs into her Sales Agent portal. She adds **Pizza House** as a new lead, fills in the contact details and expected value. She schedules a call task for **Thursday 2PM**. After the call, she logs it as an Activity with outcome notes. The lead moves through `Contacted → Negotiation` and finally she marks it as **Won**. Sarah receives an instant notification and sees the revenue chart update on her dashboard.
 
 </details>
 
@@ -383,21 +404,21 @@ Karim opens the HRM portal and sees a **Pending** leave request from Mahmoud for
 <details>
 <summary><b>💰 Scenario 3 — Karim generates monthly payroll</b></summary>
 
-At the end of the month, Karim clicks **Generate Payroll**. The system calculates each employee's net salary: `Basic Salary + Bonuses − Deductions`. Individual PDF payslips are generated and available for download in each employee's portal.
+At the end of the month, Karim clicks **Generate Payroll**. The system calculates each employee's net salary: `Basic Salary + Bonuses − Deductions`. Individual PDF payslips are generated and pushed to each employee's personal portal for download.
 
 </details>
 
 <details>
 <summary><b>🕘 Scenario 4 — Mahmoud records daily attendance</b></summary>
 
-Mahmoud arrives at 9:05 AM and opens his Employee portal. He taps **Check In** — the system records his arrival and flags him as **Late (5 minutes)**. At end of day he taps **Check Out**. He can view his full monthly attendance history including working hours per day.
+Mahmoud arrives at 9:05 AM and opens his Employee portal. He taps **Check In** — the system records his arrival and flags him as **Late (5 minutes)**. At end of day he taps **Check Out**. He can view his full monthly attendance history with working hours per day.
 
 </details>
 
 <details>
 <summary><b>📊 Scenario 5 — Sarah monitors sales performance</b></summary>
 
-Sarah opens the Admin Dashboard and navigates to **CRM Reports**. She sees a breakdown of Won vs Lost deals per agent for the current quarter, overall conversion rates, and trends over time. She exports the data to **CSV** for the board meeting.
+Sarah opens the Admin Dashboard and navigates to **CRM Reports**. She sees a breakdown of Won vs Lost deals per agent for the current quarter, overall conversion rates, and monthly trends. She exports the data to **CSV** for the board meeting.
 
 </details>
 
@@ -408,14 +429,15 @@ Sarah opens the Admin Dashboard and navigates to **CRM Reports**. She sees a bre
 ```
 tadbeer/
 │
-├── backend/                        # Node.js + Express API
+├── backend/                          # Node.js + Express API
 │   ├── config/
-│   │   └── db.js                   # MongoDB connection (Mongoose)
+│   │   └── db.js                     # MongoDB connection via Mongoose
 │   ├── middleware/
-│   │   ├── auth.js                 # JWT verification
-│   │   └── rbac.js                 # Role-based access control
+│   │   ├── auth.js                   # protect() — verify JWT, attach req.user
+│   │   ├── rbac.js                   # authorize(...roles) — check role permission
+│   │   └── validate.js               # Joi validation wrapper
 │   ├── models/
-│   │   ├── Employee.js             # Mongoose schema
+│   │   ├── Employee.js
 │   │   ├── Lead.js
 │   │   ├── Activity.js
 │   │   ├── Task.js
@@ -429,7 +451,8 @@ tadbeer/
 │   │   ├── employee.routes.js
 │   │   ├── attendance.routes.js
 │   │   ├── leave.routes.js
-│   │   └── payroll.routes.js
+│   │   ├── payroll.routes.js
+│   │   └── notification.routes.js
 │   ├── controllers/
 │   │   ├── auth.controller.js
 │   │   ├── lead.controller.js
@@ -437,51 +460,40 @@ tadbeer/
 │   │   ├── attendance.controller.js
 │   │   ├── leave.controller.js
 │   │   └── payroll.controller.js
+│   ├── validators/                   # Joi schemas per resource
+│   │   ├── lead.validator.js
+│   │   ├── employee.validator.js
+│   │   └── leave.validator.js
 │   ├── utils/
-│   │   ├── generatePayslip.js      # PDFKit payslip generation
-│   │   └── sendNotification.js
+│   │   ├── generatePayslip.js        # PDFKit — build payslip PDF
+│   │   └── sendNotification.js       # Create in-app notification
 │   ├── seed/
-│   │   └── seed.js                 # Seed demo data
+│   │   └── seed.js                   # Seeds 4 roles, 4 demo users,
+│   │                                 # 10 leads, sample attendance
 │   ├── .env.example
 │   ├── package.json
-│   └── server.js                   # Entry point
+│   └── server.js                     # Entry point
 │
-└── frontend/                       # React 18 + Bootstrap 5
+└── frontend/                         # React 18 + Bootstrap 5
     ├── public/
-    ├── src/
-    │   ├── pages/
-    │   │   ├── auth/
-    │   │   │   └── Login.jsx
-    │   │   ├── admin/
-    │   │   │   ├── Dashboard.jsx
-    │   │   │   └── Settings.jsx
-    │   │   ├── crm/
-    │   │   │   ├── LeadsList.jsx
-    │   │   │   ├── LeadDetails.jsx
-    │   │   │   └── NewLead.jsx
-    │   │   └── hrm/
-    │   │       ├── Employees.jsx
-    │   │       ├── Attendance.jsx
-    │   │       ├── LeaveRequests.jsx
-    │   │       └── Payroll.jsx
-    │   ├── components/
-    │   │   ├── layout/
-    │   │   │   ├── Sidebar.jsx
-    │   │   │   └── Navbar.jsx
-    │   │   └── ui/
-    │   │       ├── LeadCard.jsx
-    │   │       ├── StatusBadge.jsx
-    │   │       └── RoleGuard.jsx     # Protect routes by role
-    │   ├── context/
-    │   │   └── AuthContext.jsx       # JWT + user state
-    │   ├── hooks/
-    │   │   └── useAuth.js
-    │   ├── api/
-    │   │   └── axios.js              # Axios instance + interceptors
-    │   ├── App.jsx
-    │   └── main.jsx
-    ├── .env.example
-    └── package.json
+    └── src/
+        ├── pages/
+        │   ├── auth/           Login.jsx
+        │   ├── admin/          Dashboard.jsx · Settings.jsx
+        │   ├── crm/            LeadsList.jsx · LeadDetails.jsx · NewLead.jsx
+        │   └── hrm/            Employees.jsx · Attendance.jsx
+        │                       LeaveRequests.jsx · Payroll.jsx
+        ├── components/
+        │   ├── layout/         Sidebar.jsx · Navbar.jsx · Footer.jsx
+        │   └── ui/             StatusBadge.jsx · RoleGuard.jsx · KpiCard.jsx
+        ├── context/
+        │   └── AuthContext.jsx         # JWT storage + current user state
+        ├── hooks/
+        │   └── useAuth.js
+        ├── api/
+        │   └── axios.js                # Axios instance + JWT interceptor
+        ├── App.jsx
+        └── main.jsx
 ```
 
 ---
@@ -491,38 +503,30 @@ tadbeer/
 ### Prerequisites
 
 - Node.js 20+
-- MongoDB (local or Atlas)
+- MongoDB (local) or [MongoDB Atlas](https://www.mongodb.com/atlas) (cloud)
 - npm or yarn
 
 ### Backend Setup
 
 ```bash
-# Clone the repo
+# 1. Clone the repo
 git clone https://github.com/your-username/tadbeer.git
 cd tadbeer/backend
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Environment setup
+# 3. Configure environment
 cp .env.example .env
-```
+# Edit .env with your values (see Environment Variables section)
 
-Edit `.env`:
-```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/tadbeer
-JWT_SECRET=your_super_secret_key
-JWT_EXPIRES_IN=7d
-```
-
-```bash
-# Seed demo data
+# 4. Seed demo data
 node seed/seed.js
+# Creates: 4 roles, 4 demo users, 10 sample leads, attendance records
 
-# Start the server
-npm run dev        # development (nodemon)
-npm start          # production
+# 5. Start the server
+npm run dev      # development — nodemon auto-restart
+npm start        # production
 ```
 
 ### Frontend Setup
@@ -530,20 +534,11 @@ npm start          # production
 ```bash
 cd ../frontend
 
-# Install dependencies
 npm install
 
-# Environment setup
 cp .env.example .env
-```
+# Set VITE_API_URL=http://localhost:5000/api
 
-Edit `.env`:
-```env
-VITE_API_URL=http://localhost:5000/api
-```
-
-```bash
-# Start dev server
 npm run dev
 ```
 
@@ -558,19 +553,52 @@ npm run dev
 
 ---
 
+## ⚙️ Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values:
+
+```env
+# ── Server ────────────────────────────────
+PORT=5000
+NODE_ENV=development
+
+# ── Database ──────────────────────────────
+MONGO_URI=your_mongodb_connection_string
+# Local example:  mongodb://localhost:27017/tadbeer
+# Atlas example:  mongodb+srv://user:pass@cluster.mongodb.net/tadbeer
+
+# ── Authentication ────────────────────────
+JWT_SECRET=your_super_secret_key_change_this_in_production
+JWT_EXPIRES_IN=7d
+
+# ── Email (optional — for notifications) ──
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
+
+# ── File Storage ──────────────────────────
+UPLOAD_PATH=./uploads
+MAX_FILE_SIZE=5mb
+```
+
+> ⚠️ Never commit your real `.env` file. Make sure it's listed in `.gitignore`.
+
+---
+
 ## 🗺️ Roadmap
 
 | Phase | Duration | Deliverables | Status |
 |-------|----------|-------------|--------|
 | 1 | Week 1 | MongoDB setup, Mongoose models, JWT auth | ✅ Done |
-| 2 | Week 2 | Leads & Employees CRUD APIs | ✅ Done |
+| 2 | Week 2 | Leads & Employees CRUD APIs + Joi validation | ✅ Done |
 | 3 | Week 3 | Attendance, Leave, Payroll APIs | 🔄 In Progress |
 | 4 | Week 4 | React app — Login, Admin Dashboard, Sidebar | ✅ Done |
 | 5 | Week 5 | CRM pages — Leads List, Lead Details | 🔄 In Progress |
 | 6 | Week 6 | HRM pages — Employees, Attendance, Leave, Payroll | ⏳ Pending |
-| 7 | Week 7 | Sales Agent & Employee portals | ⏳ Pending |
-| 8 | Week 8 | Reports, Notifications, Settings | ⏳ Pending |
-| 9 | Week 9 | Testing, documentation, final presentation | ⏳ Pending |
+| 7 | Week 7 | Sales Agent & Employee self-service portals | ⏳ Pending |
+| 8 | Week 8 | Reports, Notifications, Settings, PDF payslips | ⏳ Pending |
+| 9 | Week 9 | Testing, bug fixes, documentation, presentation | ⏳ Pending |
 
 ---
 
