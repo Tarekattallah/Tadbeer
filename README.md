@@ -15,6 +15,7 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://mongodb.com)
 [![Mongoose](https://img.shields.io/badge/Mongoose-ODM-880000?style=flat-square&logo=mongoose&logoColor=white)](https://mongoosejs.com)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
 [![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=flat-square&logo=bootstrap&logoColor=white)](https://getbootstrap.com)
 [![JWT](https://img.shields.io/badge/Auth-JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io)
 [![Joi](https://img.shields.io/badge/Validation-Joi-0080FF?style=flat-square)](https://joi.dev)
@@ -75,7 +76,7 @@ Before Tadbeer, TechNile faced three core operational failures:
 | Feature | Description |
 |---------|-------------|
 | Lead Pipeline | Full lifecycle: `New → Assigned → Contacted → Negotiation → Won / Lost` |
-| Agent Assignment | Admin assigns leads to sales agents automatically |
+| Agent Assignment | Admin assigns leads to sales agents |
 | Activity Logging | Log calls, meetings, emails with timestamps per lead |
 | Task Management | Create tasks with due dates, priorities, and reminders |
 | Conversion Reports | Win/loss rate per agent, exportable to CSV |
@@ -85,7 +86,8 @@ Before Tadbeer, TechNile faced three core operational failures:
 | Feature | Description |
 |---------|-------------|
 | Employee Directory | Full employee profiles with roles, departments, and contracts |
-| Attendance Tracking | Daily check-in/check-out with Late/Absent auto-detection |
+| Attendance Tracking | GPS-verified check-in/check-out with Late/Absent auto-detection |
+| GPS Geofencing | Check-in only allowed within 100m of company location — location & distance recorded |
 | Leave Requests | Submit, approve, or reject — balance auto-deducted on approval |
 | Payroll Automation | Monthly net salary: `Base + Bonuses − Deductions` |
 | Payslip PDF | Auto-generated payslips downloadable from employee portal |
@@ -101,7 +103,7 @@ Tadbeer is built around **4 core roles**. The highest authority is **Admin** —
 | 📊 | **Sarah** | Admin / General Manager | Highest authority — full CRM + HRM overview, reports, payroll approval, user management |
 | 🧑‍💼 | **Karim** | HR Manager | HRM only — employees, attendance, leave requests, payroll generation |
 | 🎯 | **Layla** | Sales Agent | Her own leads, tasks, and activities only |
-| 👤 | **Mahmoud** | Employee | Personal portal — check-in, leave requests, own payslip |
+| 👤 | **Mahmoud** | Employee | Personal portal — check-in (GPS-verified), leave requests, own payslip |
 
 > **Why no Super Admin?** Tadbeer serves a single organization. The Admin role (Sarah) holds full system control. A super-admin layer would add unnecessary complexity without business value.
 
@@ -109,7 +111,7 @@ Tadbeer is built around **4 core roles**. The highest authority is **Admin** —
 
 ## 🖥️ System Screens
 
-### ✅ Completed
+### ✅ Completed (UI Design)
 
 | # | Screen | Role(s) | Key Features |
 |---|--------|---------|--------------|
@@ -117,22 +119,21 @@ Tadbeer is built around **4 core roles**. The highest authority is **Admin** —
 | 2 | **Admin Dashboard** | Admin | KPIs, revenue chart, recent activity feed |
 | 3 | **CRM Client Hub** | Admin, Sales Agent | Lead stats, contacts table, lead detail panel |
 | 4 | **HRM Employee Portal** | Admin, HR Manager | Attendance overview, team calendar, employee directory |
-| 5 | **Project Tracking** | Admin, Sales, Support | Budget, Kanban board (Backlog / In Progress / Review / Done) |
-| 6 | **Leads List** | Admin, Sales Agent | Filterable lead table with status badges |
+| 5 | **Leads List** | Admin, Sales Agent | Filterable lead table with status badges |
 
 ### 🔜 In Progress
 
 | # | Screen | Priority | Purpose |
 |---|--------|----------|---------|
-| 7 | **Lead Details Page** | 🔴 HIGH | Full lead profile, activity timeline, tasks |
-| 8 | **Attendance Page** | 🔴 HIGH | Daily records, filter by employee/date |
-| 9 | **Leave Requests Page** | 🔴 HIGH | Pending/approved requests, approval workflow |
-| 10 | **Payroll Page** | 🔴 HIGH | Monthly payroll table, generate payroll, payslips |
-| 11 | **Employee Profile** | 🟡 MEDIUM | Individual data, contract, leave balance |
-| 12 | **Sales Agent Dashboard** | 🟡 MEDIUM | Personal pipeline, tasks, activity summary |
-| 13 | **Employee Self-Service** | 🟡 MEDIUM | Check-in, leave form, payslip download |
-| 14 | **Settings Page** | 🟢 LOW | Company profile, user management |
-| 15 | **Reports & Analytics** | 🟢 LOW | Conversion rates, HR stats, CSV export |
+| 6 | **Lead Details Page** | 🔴 HIGH | Full lead profile, activity timeline, embedded tasks |
+| 7 | **Attendance Page** | 🔴 HIGH | GPS check-in/out, daily records, distance from office |
+| 8 | **Leave Requests Page** | 🔴 HIGH | Pending/approved requests, approval workflow |
+| 9 | **Payroll Page** | 🔴 HIGH | Monthly payroll table, generate payroll, payslips |
+| 10 | **Employee Profile** | 🟡 MEDIUM | Individual data, contract, leave balance |
+| 11 | **Sales Agent Dashboard** | 🟡 MEDIUM | Personal pipeline, tasks, activity summary |
+| 12 | **Employee Self-Service** | 🟡 MEDIUM | GPS check-in, leave form, payslip download |
+| 13 | **Settings Page** | 🟢 LOW | Company profile, user management |
+| 14 | **Reports & Analytics** | 🟢 LOW | Conversion rates, HR stats, CSV export |
 
 ---
 
@@ -144,8 +145,8 @@ Tadbeer is built around **4 core roles**. The highest authority is **Admin** —
 └────────────────────┬────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────┐
-│       Frontend: React 18 + Bootstrap 5           │
-│       React Router · Axios · React Bootstrap     │
+│     Frontend: React 18 + Vite + Bootstrap 5      │
+│     React Router · Axios · Leaflet (GPS map)     │
 └────────────────────┬────────────────────────────┘
                      │  REST API (HTTP/HTTPS + JSON)
 ┌────────────────────▼────────────────────────────┐
@@ -156,7 +157,7 @@ Tadbeer is built around **4 core roles**. The highest authority is **Admin** —
                      │
 ┌────────────────────▼────────────────────────────┐
 │            Database: MongoDB (Mongoose)          │
-│     6 core collections · GridFS file storage    │
+│        6 core collections · Embedded docs        │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -167,7 +168,9 @@ Tadbeer is built around **4 core roles**. The highest authority is **Admin** —
 | ODM | Mongoose | 8.x | MongoDB schema & queries |
 | Database | MongoDB | 7.x | NoSQL document storage |
 | Frontend | React.js | 18.x | UI components & SPA routing |
+| Bundler | Vite | 5.x | Fast dev server & build tool |
 | Styling | Bootstrap | 5.x | Responsive UI components |
+| Maps | Leaflet | — | GPS map display for attendance |
 | Auth | JSON Web Tokens (JWT) | — | Stateless session management |
 | Validation | Joi | — | Request body validation |
 | PDF | PDFKit | — | Monthly payslip generation |
@@ -184,9 +187,9 @@ employees ───────────────────────�
     │  department: ['management','sales','hr',        │
     │               'support']                        │
     │                                                 │
-    ├──── leads        (agentId ref → Employee)       │
-    │       └── activities  (leadId ref → Lead)       │
-    │       └── tasks        (leadId ref → Lead)      │
+    ├──── leads (agentId ref → Employee)              │
+    │       └── activities[]  ← embedded array        │
+    │       └── tasks[]       ← embedded array        │
     │                                                 │
     ├──── attendance    (employeeId ref → Employee)   │
     ├──── leaveRequests (employeeId ref → Employee)   │
@@ -224,7 +227,7 @@ const employeeSchema = new mongoose.Schema({
 </details>
 
 <details>
-<summary><b>Lead Schema</b> (click to expand)</summary>
+<summary><b>Lead Schema — with embedded Activities & Tasks</b> (click to expand)</summary>
 
 ```js
 const leadSchema = new mongoose.Schema({
@@ -238,25 +241,73 @@ const leadSchema = new mongoose.Schema({
     enum: ['New', 'Assigned', 'Contacted', 'Negotiation', 'Won', 'Lost'],
     default: 'New'
   },
-  agentId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
-  createdBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
-  notes:      { type: String },
+  agentId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
+  notes:     { type: String },
+
+  // Embedded — no separate collections needed
+  activities: [{
+    type:      { type: String, enum: ['call', 'meeting', 'email', 'note'] },
+    notes:     { type: String },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
+    createdAt: { type: Date, default: Date.now }
+  }],
+
+  tasks: [{
+    title:      { type: String, required: true },
+    dueDate:    { type: Date },
+    priority:   { type: String, enum: ['high', 'medium', 'low'], default: 'medium' },
+    status:     { type: String, enum: ['pending', 'done'], default: 'pending' },
+    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }
+  }]
 }, { timestamps: true });
 ```
+
+> **Design decision:** Activities and Tasks are embedded inside Lead documents.
+> This simplifies queries for the Lead Details page and avoids unnecessary joins.
+> A Sales Agent will always access tasks/activities in the context of a specific lead.
 
 </details>
 
 <details>
-<summary><b>Attendance Schema</b> (click to expand)</summary>
+<summary><b>Attendance Schema — with GPS Geofencing</b> (click to expand)</summary>
 
 ```js
 const attendanceSchema = new mongoose.Schema({
   employeeId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
   date:         { type: Date, required: true },
-  checkIn:      { type: String },       // "09:05"
-  checkOut:     { type: String },       // "17:30"
+  checkIn:      { type: Date },
+  checkOut:     { type: Date },
+  locationIn: {
+    lat: { type: Number },
+    lng: { type: Number }
+  },
+  distanceIn:   { type: Number },   // metres from company location at check-in
   status:       { type: String, enum: ['Present', 'Late', 'Absent'], default: 'Present' },
   workingHours: { type: Number },
+}, { timestamps: true });
+```
+
+> **GPS Geofencing:** Check-in is only enabled when the employee is within 100m of the
+> company's registered location (calculated using the Haversine formula on the frontend).
+> The location and distance are stored with every check-in record.
+> HR Managers can view each employee's distance from the office in the attendance table.
+
+</details>
+
+<details>
+<summary><b>LeaveRequest Schema</b> (click to expand)</summary>
+
+```js
+const leaveRequestSchema = new mongoose.Schema({
+  employeeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
+  type:       { type: String, enum: ['annual', 'sick', 'emergency'], required: true },
+  startDate:  { type: Date, required: true },
+  endDate:    { type: Date, required: true },
+  reason:     { type: String },
+  status:     { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
+  reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee' },
+  reviewNote: { type: String },
 }, { timestamps: true });
 ```
 
@@ -268,7 +319,7 @@ const attendanceSchema = new mongoose.Schema({
 ```js
 const payrollSchema = new mongoose.Schema({
   employeeId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
-  month:       { type: String, required: true },   // "2025-01"
+  month:       { type: String, required: true },   // "2025-06"
   basicSalary: { type: Number },
   bonuses:     { type: Number, default: 0 },
   deductions:  { type: Number, default: 0 },
@@ -304,20 +355,21 @@ GET    /api/auth/me          → Get current user profile
 ```
 GET    /api/leads                  → List leads (auto-filtered by role)
 POST   /api/leads                  → Create new lead
-GET    /api/leads/:id              → Lead details + activities + tasks
+GET    /api/leads/:id              → Lead details + embedded activities + tasks
 PUT    /api/leads/:id              → Update lead
-DELETE /api/leads/:id              → Delete lead           [admin]
-PATCH  /api/leads/:id/assign       → Assign to agent       [admin]
+DELETE /api/leads/:id              → Delete lead                    [admin]
+PATCH  /api/leads/:id/assign       → Assign to agent                [admin]
 PATCH  /api/leads/:id/status       → Update pipeline status
 ```
 
-### CRM — Activities & Tasks
+### CRM — Activities & Tasks (embedded in Lead)
 ```
-POST   /api/leads/:id/activities   → Log activity (call/meeting/email/note)
-GET    /api/leads/:id/activities   → Get activity timeline
-POST   /api/leads/:id/tasks        → Add task to lead
-GET    /api/tasks                  → List tasks (filtered by role)
-PATCH  /api/tasks/:id/status       → Mark task done / pending
+POST   /api/leads/:id/activities        → Log activity (call/meeting/email/note)
+DELETE /api/leads/:id/activities/:actId → Remove activity            [admin]
+
+POST   /api/leads/:id/tasks             → Add task to lead
+PATCH  /api/leads/:id/tasks/:taskId     → Update task (status, priority)
+DELETE /api/leads/:id/tasks/:taskId     → Remove task
 ```
 
 ### HRM — Employees
@@ -329,13 +381,13 @@ PUT    /api/employees/:id          → Update employee       [admin, hr_manager]
 DELETE /api/employees/:id          → Deactivate employee   [admin]
 ```
 
-### HRM — Attendance
+### HRM — Attendance (GPS-enabled)
 ```
-POST   /api/attendance/checkin         → Record check-in      [employee]
-POST   /api/attendance/checkout        → Record check-out     [employee]
-GET    /api/attendance                 → All records          [admin, hr_manager]
-GET    /api/attendance/my              → Own records          [employee]
-GET    /api/attendance/:employeeId     → Specific employee    [admin, hr_manager]
+POST   /api/attendance/checkin         → Record check-in (lat, lng required)  [employee]
+POST   /api/attendance/checkout        → Record check-out                      [employee]
+GET    /api/attendance                 → All records with distance column       [admin, hr_manager]
+GET    /api/attendance/my              → Own records                            [employee]
+GET    /api/attendance/:employeeId     → Specific employee records              [admin, hr_manager]
 ```
 
 ### HRM — Leave Requests
@@ -351,8 +403,8 @@ PATCH  /api/leaves/:id/reject          → Reject with comment  [admin, hr_manag
 ```
 POST   /api/payroll/generate           → Generate monthly payroll  [admin, hr_manager]
 GET    /api/payroll                    → View payroll list          [admin, hr_manager]
-GET    /api/payroll/my                 → Own payslip               [all roles]
-GET    /api/payroll/:id/pdf            → Download payslip PDF      [admin, hr_manager, self]
+GET    /api/payroll/my                 → Own payslips               [all roles]
+GET    /api/payroll/:id/pdf            → Download payslip PDF       [admin, hr_manager, self]
 ```
 
 ### Notifications
@@ -361,7 +413,7 @@ GET    /api/notifications              → Current user notifications
 PATCH  /api/notifications/read         → Mark all as read
 ```
 
-> **Validation:** All request bodies are validated using **Joi**. Invalid requests return `400` with a descriptive error message. Auth errors return `401`. Permission errors return `403`.
+> **Validation:** All request bodies are validated using **Joi**. Invalid requests return `400`. Auth errors return `401`. Permission errors return `403`.
 
 ---
 
@@ -372,11 +424,11 @@ PATCH  /api/notifications/read         → Mark all as read
 | View All Leads | ✅ | Own only | ❌ | ❌ |
 | Add New Lead | ✅ | ✅ | ❌ | ❌ |
 | Assign Lead to Agent | ✅ | ❌ | ❌ | ❌ |
-| Log Activities & Tasks | ✅ | Own only | ❌ | ❌ |
+| Log Activities & Tasks | ✅ | Own leads only | ❌ | ❌ |
 | View CRM Reports | ✅ | ❌ | ❌ | ❌ |
 | Manage Employees | ✅ | ❌ | ✅ | ❌ |
 | View All Attendance | ✅ | ❌ | ✅ | ❌ |
-| Check In / Check Out | ❌ | ❌ | ❌ | ✅ |
+| GPS Check In / Check Out | ❌ | ❌ | ❌ | ✅ |
 | Approve Leave Requests | ✅ | ❌ | ✅ | ❌ |
 | Submit Leave Request | ✅ | ✅ | ✅ | ✅ |
 | Generate Monthly Payroll | ✅ | ❌ | ✅ | ❌ |
@@ -390,35 +442,35 @@ PATCH  /api/notifications/read         → Mark all as read
 <details>
 <summary><b>🎯 Scenario 1 — Layla adds a lead and closes the deal</b></summary>
 
-Layla logs into her Sales Agent portal. She adds **Pizza House** as a new lead, fills in the contact details and expected value. She schedules a call task for **Thursday 2PM**. After the call, she logs it as an Activity with outcome notes. The lead moves through `Contacted → Negotiation` and finally she marks it as **Won**. Sarah receives an instant notification and sees the revenue chart update on her dashboard.
+Layla logs into her Sales Agent portal. She adds **Pizza House** as a new lead with contact details and expected value. She adds a task "Demo call — Thursday 2PM". After the call, she logs it as an Activity with outcome notes. The lead moves through `Contacted → Negotiation` and she marks it **Won**. Sarah sees the revenue chart update on her Admin Dashboard.
 
 </details>
 
 <details>
 <summary><b>👥 Scenario 2 — Karim approves a leave request</b></summary>
 
-Karim opens the HRM portal and sees a **Pending** leave request from Mahmoud for 3 annual days. He reviews the dates and clicks **Approve**. The system auto-deducts 3 days from Mahmoud's 21-day balance, sends him a notification, and marks those days on the team attendance calendar.
+Karim opens the HRM portal and sees a **Pending** leave request from Mahmoud for 3 annual days. He reviews the dates and clicks **Approve**. The system auto-deducts 3 days from Mahmoud's 21-day balance and sends him a notification.
 
 </details>
 
 <details>
 <summary><b>💰 Scenario 3 — Karim generates monthly payroll</b></summary>
 
-At the end of the month, Karim clicks **Generate Payroll**. The system calculates each employee's net salary: `Basic Salary + Bonuses − Deductions`. Individual PDF payslips are generated and pushed to each employee's personal portal for download.
+At month end, Karim clicks **Generate Payroll**. The system calculates each employee's net salary: `Basic Salary + Bonuses − Deductions`. PDF payslips are generated and pushed to each employee's personal portal.
 
 </details>
 
 <details>
-<summary><b>🕘 Scenario 4 — Mahmoud records daily attendance</b></summary>
+<summary><b>🗺️ Scenario 4 — Mahmoud records GPS attendance</b></summary>
 
-Mahmoud arrives at 9:05 AM and opens his Employee portal. He taps **Check In** — the system records his arrival and flags him as **Late (5 minutes)**. At end of day he taps **Check Out**. He can view his full monthly attendance history with working hours per day.
+Mahmoud arrives at 9:05 AM and opens his Employee portal. The system checks his GPS location — he is 15m from the office, within the 100m allowed radius. The Check-in button is enabled. He taps it — the system records his arrival time, location, and flags him **Late (5 min)**. At end of day he taps Check Out. HR Manager Karim can see Mahmoud's distance from the office in the attendance table.
 
 </details>
 
 <details>
 <summary><b>📊 Scenario 5 — Sarah monitors sales performance</b></summary>
 
-Sarah opens the Admin Dashboard and navigates to **CRM Reports**. She sees a breakdown of Won vs Lost deals per agent for the current quarter, overall conversion rates, and monthly trends. She exports the data to **CSV** for the board meeting.
+Sarah opens the Admin Dashboard and navigates to **CRM Reports**. She sees Won vs Lost deals per agent for the current quarter, overall conversion rates, and monthly trends. She exports the data to **CSV** for the board meeting.
 
 </details>
 
@@ -437,11 +489,9 @@ tadbeer/
 │   │   ├── rbac.js                   # authorize(...roles) — check role permission
 │   │   └── validate.js               # Joi validation wrapper
 │   ├── models/
-│   │   ├── Employee.js
-│   │   ├── Lead.js
-│   │   ├── Activity.js
-│   │   ├── Task.js
-│   │   ├── Attendance.js
+│   │   ├── Employee.js               # includes role, salary, leaveBalance
+│   │   ├── Lead.js                   # includes embedded activities[] & tasks[]
+│   │   ├── Attendance.js             # includes GPS locationIn & distanceIn
 │   │   ├── LeaveRequest.js
 │   │   ├── Payroll.js
 │   │   └── Notification.js
@@ -455,26 +505,26 @@ tadbeer/
 │   │   └── notification.routes.js
 │   ├── controllers/
 │   │   ├── auth.controller.js
-│   │   ├── lead.controller.js
+│   │   ├── lead.controller.js        # handles embedded activities & tasks too
 │   │   ├── employee.controller.js
-│   │   ├── attendance.controller.js
+│   │   ├── attendance.controller.js  # handles GPS validation logic
 │   │   ├── leave.controller.js
 │   │   └── payroll.controller.js
 │   ├── validators/                   # Joi schemas per resource
+│   │   ├── auth.validator.js
 │   │   ├── lead.validator.js
 │   │   ├── employee.validator.js
 │   │   └── leave.validator.js
 │   ├── utils/
 │   │   ├── generatePayslip.js        # PDFKit — build payslip PDF
-│   │   └── sendNotification.js       # Create in-app notification
+│   │   └── sendNotification.js       # Create in-app notification document
 │   ├── seed/
-│   │   └── seed.js                   # Seeds 4 roles, 4 demo users,
-│   │                                 # 10 leads, sample attendance
+│   │   └── seed.js                   # Seeds 4 demo users, 10 leads, attendance records
 │   ├── .env.example
 │   ├── package.json
 │   └── server.js                     # Entry point
 │
-└── frontend/                         # React 18 + Bootstrap 5
+└── frontend/                         # React 18 + Vite + Bootstrap 5
     ├── public/
     └── src/
         ├── pages/
@@ -510,7 +560,7 @@ tadbeer/
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/your-username/tadbeer.git
+git clone https://github.com/Tarekattallah/tadbeer.git
 cd tadbeer/backend
 
 # 2. Install dependencies
@@ -522,7 +572,7 @@ cp .env.example .env
 
 # 4. Seed demo data
 node seed/seed.js
-# Creates: 4 roles, 4 demo users, 10 sample leads, attendance records
+# Creates: 4 demo users (one per role), 10 sample leads, attendance records
 
 # 5. Start the server
 npm run dev      # development — nodemon auto-restart
@@ -564,18 +614,17 @@ NODE_ENV=development
 
 # ── Database ──────────────────────────────
 MONGO_URI=your_mongodb_connection_string
-# Local example:  mongodb://localhost:27017/tadbeer
-# Atlas example:  mongodb+srv://user:pass@cluster.mongodb.net/tadbeer
+# Local:  mongodb://localhost:27017/tadbeer
+# Atlas:  mongodb+srv://user:pass@cluster.mongodb.net/tadbeer
 
 # ── Authentication ────────────────────────
 JWT_SECRET=your_super_secret_key_change_this_in_production
 JWT_EXPIRES_IN=7d
 
-# ── Email (optional — for notifications) ──
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password
+# ── Company Location (for GPS Geofencing) ─
+COMPANY_LAT=30.0525
+COMPANY_LNG=31.2387
+COMPANY_RADIUS=100
 
 # ── File Storage ──────────────────────────
 UPLOAD_PATH=./uploads
@@ -588,17 +637,17 @@ MAX_FILE_SIZE=5mb
 
 ## 🗺️ Roadmap
 
-| Phase | Duration | Deliverables | Status |
-|-------|----------|-------------|--------|
-| 1 | Week 1 | MongoDB setup, Mongoose models, JWT auth | ✅ Done |
-| 2 | Week 2 | Leads & Employees CRUD APIs + Joi validation | ✅ Done |
-| 3 | Week 3 | Attendance, Leave, Payroll APIs | 🔄 In Progress |
-| 4 | Week 4 | React app — Login, Admin Dashboard, Sidebar | ✅ Done |
-| 5 | Week 5 | CRM pages — Leads List, Lead Details | 🔄 In Progress |
-| 6 | Week 6 | HRM pages — Employees, Attendance, Leave, Payroll | ⏳ Pending |
-| 7 | Week 7 | Sales Agent & Employee self-service portals | ⏳ Pending |
-| 8 | Week 8 | Reports, Notifications, Settings, PDF payslips | ⏳ Pending |
-| 9 | Week 9 | Testing, bug fixes, documentation, presentation | ⏳ Pending |
+| Sprint | Duration | Deliverables | Status |
+|--------|----------|-------------|--------|
+| 1 | Week 1 | Project setup, Mongoose models, JWT auth (login + protect + RBAC) | ⏳ Pending |
+| 2 | Week 2 | Leads CRUD + embedded activities & tasks APIs + Joi validation | ⏳ Pending |
+| 3 | Week 3 | Employees CRUD + Attendance (GPS check-in/out) + Leave APIs | ⏳ Pending |
+| 4 | Week 4 | Payroll generation + PDF payslips + Notifications | ⏳ Pending |
+| 5 | Week 5 | React app — Login, Sidebar, Admin Dashboard, Leads List | ⏳ Pending |
+| 6 | Week 6 | Lead Details page (timeline + tasks) + GPS Attendance page (Leaflet map) | ⏳ Pending |
+| 7 | Week 7 | HRM pages — Employees, Leave Requests, Payroll + Employee self-service | ⏳ Pending |
+| 8 | Week 8 | Dashboards (Admin, Agent, HR, Employee) + Reports + CSV export | ⏳ Pending |
+| 9 | Week 9 | Testing, bug fixes, seed data polish, presentation prep | ⏳ Pending |
 
 ---
 
@@ -614,6 +663,6 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE) for de
 
 *Graduation Project · TechNile CRM + HRM Platform · 2025*
 
-Built with ❤️ using Node.js + Express + MongoDB + React + Bootstrap
+Built with ❤️ using Node.js + Express + MongoDB + React + Vite + Bootstrap
 
 </div>
